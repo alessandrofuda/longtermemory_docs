@@ -1,6 +1,6 @@
 # LongTerMemory - Technical Documentation
 
-**[LongTermMemory](https://longtermemory.com)** is an AI-powered SaaS platform for studying and exam preparation. It automatically generates question-answer pairs from uploaded documents and web links using Retrieval-Augmented Generation (RAG), then schedules review sessions using spaced repetition to move knowledge into long-term memory.
+**[LongTerMemory](https://longtermemory.com)** is an AI-powered SaaS platform for studying and exam preparation. It automatically generates question-answer pairs from uploaded documents and web links using Retrieval-Augmented Generation (RAG), then schedules review sessions using spaced repetition to move knowledge into long-term memory.
 
 ## Architecture
 

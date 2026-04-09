@@ -128,7 +128,7 @@ function LandingRoute() {
 
 ## Authentication
 
-LongTermMemory uses **magic link** authentication (no passwords).
+LongTerMemory uses **magic link** authentication (no passwords).
 
 ### Flow
 

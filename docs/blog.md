@@ -1,6 +1,6 @@
 # Blog — Astro Content Site
 
-The [LongTermMemory](https://longtermemory.com) blog is a static content marketing site built with Astro v5. It serves content about spaced repetition, learning science, AI-powered education, and memory techniques.
+The [LongTerMemory](https://longtermemory.com) blog is a static content marketing site built with Astro v5. It serves content about spaced repetition, learning science, AI-powered education, and memory techniques.
 
 It is deployed at [longtermemory.com/b/](https://longtermemory.com/b/) as a subdirectory of the main domain.
 
