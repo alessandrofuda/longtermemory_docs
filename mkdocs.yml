@@ -14,6 +14,8 @@ theme:
     - navigation.top
     - content.code.copy
 
+exclude_docs: SUMMARY.md
+
 nav:
   - Overview: index.md
   - Frontend: frontend.md
