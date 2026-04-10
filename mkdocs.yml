@@ -1,7 +1,7 @@
 site_name: LongTerMemory Documentation
 site_url: https://longtermemory.readthedocs.io
 site_description: Technical documentation for LongTerMemory — AI-powered study platform using RAG and spaced repetition.
-repo_url: https://github.com/alessandrofuda/longtermemory
+repo_url: https://github.com/alessandrofuda/longtermemory_docs
 repo_name: longtermemory
 
 theme:
