@@ -1,0 +1,27 @@
+site_name: LongTerMemory Documentation
+site_url: https://longtermemory.readthedocs.io
+site_description: Technical documentation for LongTerMemory — AI-powered study platform using RAG and spaced repetition.
+repo_url: https://github.com/alessandrofuda/longtermemory
+repo_name: longtermemory
+
+theme:
+  name: material
+  palette:
+    primary: green
+    accent: light green
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Overview: index.md
+  - Frontend: frontend.md
+  - Backend: backend.md
+  - Blog: blog.md
+
+markdown_extensions:
+  - tables
+  - fenced_code
+  - admonition
+  - pymdownx.superfences
