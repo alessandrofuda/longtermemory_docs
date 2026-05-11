@@ -1,6 +1,6 @@
-# Summary
+# Table of contents
 
-* [Overview](index.md)
+* [Overview](README.md)
 * [Frontend](frontend.md)
 * [Backend](backend.md)
 * [Blog](blog.md)
