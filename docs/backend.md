@@ -263,7 +263,7 @@ Key relationships: User → Projects (1:many) → Documents/WebLinks (1:many) �
 Tests run inside Docker against a dedicated `longtermemory_test` MySQL database.
 
 ```bash
-docker exec -it longtermemory_app php artisan test                          # All 51 tests
+docker exec -it longtermemory_app php artisan test                          # All 67 tests
 docker exec -it longtermemory_app php artisan test --testsuite=Feature
 docker exec -it longtermemory_app php artisan test --filter=test_method_name
 docker exec -it longtermemory_app php artisan test tests/Feature/Auth/AuthTest.php
@@ -294,7 +294,7 @@ docker exec -it longtermemory_app php artisan test tests/Feature/Auth/AuthTest.p
 | Vector database | Qdrant (client 1.7.3) |
 | Embeddings | OpenAI `text-embedding-3-small` |
 | LLM | OpenAI `gpt-3.5-turbo` (configurable via `LLM_MODEL`) |
-| Document parsing | PyMuPDF, python-docx, openpyxl, BeautifulSoup4 |
+| Document parsing | LlamaParse cloud API (PDF/DOCX/XLSX), BeautifulSoup4 (web) |
 | Object storage client | boto3 1.34.0 |
 | Test framework | pytest + pytest-asyncio + pytest-timeout |
 
@@ -323,7 +323,7 @@ rag-service/
 ├── utils/
 │   ├── auth.py                 # API key authentication (X-API-Key header)
 │   └── job_storage.py          # Redis job tracking
-└── tests/                      # 202 tests
+└── tests/                      # 351 tests
 ```
 
 ### Development Commands
@@ -338,7 +338,7 @@ docker compose up -d --build python-rag     # After dependency changes
 # Access container shell
 docker exec -it longtermemory_python_rag bash
 
-# Run tests (202 tests, ~7s)
+# Run tests (351 tests, ~7s)
 docker compose exec -T python-rag python -m pytest tests/ -v
 docker compose exec -T python-rag python -m pytest tests/test_embeddings.py -v
 docker compose exec -T python-rag python -m pytest tests/ -v -m unit
@@ -372,9 +372,13 @@ Celery task queued (rag_processing queue)
         ▼
 For each source (document or weblink):
   1. Download file from MinIO (documents) or scrape URL (weblinks)
-  2. Parse text (PyMuPDF / python-docx / BeautifulSoup4)
-  3. Semantic chunking (2-stage LlamaIndex, dynamic sizing)
-  4. Section title enrichment (structural heading or LLM-generated)
+  2. Parse text:
+     - Documents (PDF/DOCX/XLSX): LlamaParse cloud API → structured markdown
+     - Weblinks: BeautifulSoup4 → plain text
+  3. Chunk text:
+     - Documents: MarkdownNodeParser (splits by heading hierarchy) + SentenceSplitter safety pass for oversized nodes
+     - Weblinks: SentenceSplitter directly
+  4. Section titles extracted from MarkdownNodeParser heading metadata (Header_1/Header_2)
   5. Generate embeddings (OpenAI text-embedding-3-small)
   6. Store vectors + metadata in Qdrant (project_{project_id} collection)
         │
@@ -394,18 +398,17 @@ Notify Laravel via POST /api/job-finished (push model — no polling from Larave
 
 ---
 
-### Semantic Chunking
+### Document Parsing & Chunking
 
-Two-stage LlamaIndex approach with dynamic sizing based on content length:
+**Documents (PDF, DOCX, XLSX)** — LlamaParse + MarkdownNodeParser pipeline:
 
-| Content | Token threshold | Chunk size | Use case |
-|---------|----------------|------------|---------|
-| Short (≤ ~15 pages) | < 10,000 tokens | 1024 | Articles, chapters |
-| Long (> ~15 pages) | ≥ 10,000 tokens | 2048 | Full books, long reports |
+1. **LlamaParse** (cloud API, `result_type="markdown"`) converts the file to structured markdown, preserving headings, tables, and layout
+2. **MarkdownNodeParser** splits the markdown by heading hierarchy — one node per section; heading metadata (`Header_1`, `Header_2`) is stored per node
+3. **SentenceSplitter** safety pass: any node exceeding `max_chunk_tokens` (default: 2048) is further split with overlap `min(200, max_tokens // 4)`
 
-**Stage 1**: `SentenceSplitter` on paragraph breaks, 200-token overlap  
-**Stage 2**: `SemanticSplitterNodeParser` with embedding similarity to avoid mid-concept splits  
-**Fallback**: Stage 1 only if no OpenAI API key is configured
+Section titles come directly from the `Header_2` → `Header_1` node metadata, with a fallback to the first `#` heading line in the chunk text.
+
+**Weblinks** — SentenceSplitter only: web-fetched plain text is chunked with `SentenceSplitter` (no LlamaParse). Section titles are extracted from any markdown headings present in each chunk.
 
 ---
 
@@ -459,6 +462,7 @@ All protected endpoints require `X-API-Key` header (set via `RAG_SERVICE_API_KEY
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPENAI_API_KEY` | — | Required. OpenAI API key |
+| `LLAMAPARSE_API_KEY` | — | Required. LlamaParse API key (cloud.llamaindex.ai) |
 | `LLM_MODEL` | `gpt-3.5-turbo` | OpenAI model for Q&A generation |
 | `QDRANT_HOST` | `qdrant` | Vector DB hostname |
 | `QDRANT_PORT` | `6333` | Vector DB port |
@@ -473,7 +477,7 @@ All protected endpoints require `X-API-Key` header (set via `RAG_SERVICE_API_KEY
 
 ### Testing Infrastructure
 
-- **202 tests**, ~7 second runtime
+- **351 tests**, ~7 second runtime
 - `pytest.ini`: 30-second global timeout prevents infinite loops
 - `conftest.py`: proper async event loop management
 - Markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
